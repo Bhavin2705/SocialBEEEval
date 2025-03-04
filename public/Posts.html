@@ -1,0 +1,905 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Social Feed</title>
+    <style>
+        /* ... (keeping all the existing styles) ... */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+            line-height: 1.5;
+            background: #f0f2f5;
+            color: #1c1e21;
+        }
+
+        nav {
+            position: sticky;
+            top: 0;
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(8px);
+            border-bottom: 1px solid #ddd;
+            padding: 12px 0;
+            z-index: 100;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 0 16px;
+        }
+
+        .card {
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+            margin-bottom: 16px;
+            overflow: hidden;
+        }
+
+        .composer {
+            padding: 16px;
+        }
+
+        .user-bar {
+            display: flex;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .user-pic {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            margin-right: 12px;
+        }
+
+        .user-name {
+            font-weight: 600;
+        }
+
+        #post-input {
+            width: 100%;
+            min-height: 100px;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            margin: 12px 0;
+            font-family: inherit;
+            resize: none;
+        }
+
+        #drop-zone {
+            border: 2px dashed #ddd;
+            border-radius: 8px;
+            padding: 24px;
+            text-align: center;
+            color: #65676b;
+            cursor: pointer;
+            margin-bottom: 12px;
+        }
+
+        #drop-zone.dragging {
+            border-color: #1876f2;
+            background: rgba(24, 118, 242, 0.05);
+        }
+
+        .preview-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .preview-item {
+            position: relative;
+            aspect-ratio: 1;
+        }
+
+        .preview-item img,
+        .preview-item video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 8px;
+        }
+
+        .remove {
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: rgba(0, 0, 0, 0.5);
+            color: #fff;
+            border: none;
+            cursor: pointer;
+        }
+
+        .post {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.3s ease;
+        }
+
+        .post.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .post header {
+            display: flex;
+            align-items: center;
+            padding: 12px 16px;
+        }
+
+        .post p {
+            padding: 0 16px 12px;
+        }
+
+        .media-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 2px;
+        }
+
+        .media-grid img,
+        .media-grid video {
+            width: 100%;
+            aspect-ratio: 1;
+            object-fit: cover;
+        }
+
+        .actions {
+            display: flex;
+            padding: 8px 16px;
+            border-top: 1px solid #ddd;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .actions button {
+            flex: 1;
+            padding: 8px;
+            background: none;
+            border: none;
+            color: #65676b;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .actions button:hover {
+            background: #f2f3f5;
+            border-radius: 8px;
+        }
+
+        .actions button.liked {
+            color: #e41e3f;
+        }
+
+        .actions button.saved {
+            color: #f7b928;
+        }
+
+        .comments {
+            padding: 12px 16px;
+        }
+
+        .comment {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .comment img {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+        }
+
+        .comment div {
+            background: #f0f2f5;
+            padding: 8px 12px;
+            border-radius: 16px;
+            flex: 1;
+        }
+
+        .comment h4 {
+            font-size: 13px;
+            margin-bottom: 2px;
+        }
+
+        .comment time {
+            font-size: 12px;
+            color: #65676b;
+            margin-top: 4px;
+            display: block;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 20px;
+            margin-top: 8px;
+        }
+
+        .btn {
+            background: #1876f2;
+            color: #fff;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .btn:hover {
+            background: #166fe5;
+        }
+
+        .actions button {
+            flex: 1;
+            padding: 8px;
+            background: none;
+            border: none;
+            color: #65676b;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            transition: all 0.2s ease;
+        }
+
+        .actions button:hover {
+            background: #f2f3f5;
+            border-radius: 8px;
+        }
+
+        .actions button.liked {
+            color: #e41e3f;
+        }
+
+        .actions button.active {
+            color: #1876f2;
+            background: #e7f3ff;
+            border-radius: 8px;
+        }
+
+        .actions button {
+            border: none;
+            background: none;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        .actions button .icon {
+            width: 20px;
+            height: 20px;
+            color: #555;
+            transition: color 0.3s;
+        }
+
+        .actions button:hover .icon {
+            color: #000;
+        }
+
+        .actions button.liked .icon {
+            color: red;
+        }
+
+        .actions button.active .icon {
+            color: blue;
+        }
+
+        .actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .actions button {
+            border: none;
+            background: none;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        .actions button .icon {
+            width: 24px;
+            height: 24px;
+            stroke: #555;
+            /* Default icon color */
+            transition: stroke 0.3s, fill 0.3s;
+        }
+
+        .actions button:hover .icon {
+            stroke: #000;
+            /* Darker icon color on hover */
+        }
+
+        .actions button.liked .icon {
+            stroke: red;
+            fill: red;
+            /* Heart fill for liked state */
+        }
+
+        .actions button.active .icon {
+            stroke: blue;
+            /* Highlighted comment icon */
+        }
+
+        .actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .actions button {
+            border: none;
+            background: none;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            color: #555;
+            /* Default icon color */
+            transition: color 0.3s;
+        }
+
+        .actions button:hover {
+            color: #000;
+            /* Darker color on hover */
+        }
+
+        .actions button .fa-heart {
+            font-size: 20px;
+            /* Adjust heart icon size */
+            transition: color 0.3s;
+        }
+
+        .actions button.liked .fa-heart {
+            color: red;
+            /* Liked state */
+        }
+
+        .actions button .fa-comment {
+            font-size: 18px;
+            /* Adjust comment icon size */
+        }
+
+        .actions button .fa-share {
+            font-size: 18px;
+            /* Adjust share icon size */
+        }
+
+        /* Drop Zone */
+        .drop-zone {
+            border: 2px dashed #ccc;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: background-color 0.3s, border-color 0.3s;
+        }
+
+        .drop-zone:hover {
+            background-color: #f0f8ff;
+            border-color: #007bff;
+        }
+
+        .icon-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .upload-icon {
+            font-size: 48px;
+            color: #007bff;
+        }
+
+        .drop-zone p {
+            margin: 0;
+            font-size: 16px;
+            color: #555;
+        }
+
+        /* Preview Grid */
+        .preview-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .preview-grid img,
+        .preview-grid video {
+            width: 100px;
+            height: 100px;
+            object-fit: cover;
+            border-radius: 4px;
+        }
+
+        /* Post Button */
+        .btn {
+            background-color: #007bff;
+            color: #fff;
+            padding: 10px 20px;
+            font-size: 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: background-color 0.3s;
+        }
+
+        .btn:hover {
+            background-color: #0056b3;
+        }
+
+        .btn .material-icons {
+            font-size: 20px;
+            color: #fff;
+        }
+    </style>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link rel="stylesheet" href="https://code.ionicframework.com/ionicons/5.5.2/css/ionicons.min.css">
+
+
+
+</head>
+
+<body>
+    <nav>
+        <div class="container">
+            <h1>Social Feed</h1>
+        </div>
+    </nav>
+
+    <main class="container">
+        <div class="card composer">
+            <div class="user-bar">
+                <img id="user-pic" class="user-pic" src="" alt="">
+                <div>
+                    <div id="user-name" class="user-name"></div>
+                    <small>Share something...</small>
+                </div>
+            </div>
+
+            <textarea id="post-input" placeholder="What's on your mind?"></textarea>
+
+            <div id="drop-zone" class="drop-zone">
+                <!-- Drag Media Place with Material Icon -->
+                <div class="icon-container">
+                    <span class="material-icons upload-icon">upload_file</span>
+                    <p>Drop media here or click to upload</p>
+                </div>
+                <input type="file" id="file-input" hidden multiple accept="image/*,video/*">
+            </div>
+
+            <div id="preview-grid" class="preview-grid"></div>
+
+            <div style="display: flex; justify-content: flex-end;">
+                <!-- Post Button with Material Icon -->
+                <button class="btn" onclick="app.posts.createPost()">
+                    <span class="material-icons">send</span>
+                    Post
+                </button>
+            </div>
+
+
+            <div id="posts"></div>
+    </main>
+
+    <script>
+        class Store {
+            constructor() {
+                this.user = null;
+                this.posts = [];
+                this.media = [];
+                this.listeners = new Set();
+            }
+
+            subscribe(fn) {
+                this.listeners.add(fn);
+                return () => this.listeners.delete(fn);
+            }
+
+            notify() {
+                this.listeners.forEach(fn => fn());
+            }
+
+            async init() {
+                await this.loadUser();
+                this.loadPosts();
+            }
+
+            async loadUser() {
+                const saved = localStorage.getItem('user');
+                if (saved) {
+                    this.user = JSON.parse(saved);
+                    this.updateUserUI();
+                    return;
+                }
+
+                try {
+                    const res = await fetch('https://randomuser.me/api/?nat=us');
+                    const { results } = await res.json();
+                    const user = results[0];
+
+                    this.user = {
+                        name: `${user.name.first} ${user.name.last}`,
+                        pic: user.picture.large
+                    };
+
+                    localStorage.setItem('user', JSON.stringify(this.user));
+                    this.updateUserUI();
+                } catch (err) {
+                    console.warn('Failed to load user:', err);
+                    // Fallback user
+                    this.user = {
+                        name: 'Guest User',
+                        pic: 'https://www.gravatar.com/avatar/?d=mp'
+                    };
+                    this.updateUserUI();
+                }
+            }
+
+            loadPosts() {
+                const saved = localStorage.getItem('posts');
+                if (saved) {
+                    this.posts = JSON.parse(saved);
+                    this.notify();
+                }
+            }
+
+            savePosts() {
+                localStorage.setItem('posts', JSON.stringify(this.posts));
+            }
+
+            updateUserUI() {
+                document.getElementById('user-pic').src = this.user.pic;
+                document.getElementById('user-name').textContent = this.user.name;
+            }
+        }
+
+        class MediaHandler {
+            constructor(store) {
+                this.store = store;
+                this.dropZone = document.getElementById('drop-zone');
+                this.fileInput = document.getElementById('file-input');
+                this.previewGrid = document.getElementById('preview-grid');
+
+                this.setupEvents();
+            }
+
+            setupEvents() {
+                this.dropZone.addEventListener('dragenter', () => {
+                    this.dropZone.classList.add('dragging');
+                });
+
+                this.dropZone.addEventListener('dragleave', () => {
+                    this.dropZone.classList.remove('dragging');
+                });
+
+                this.dropZone.addEventListener('dragover', e => {
+                    e.preventDefault();
+                });
+
+                this.dropZone.addEventListener('drop', e => {
+                    e.preventDefault();
+                    this.dropZone.classList.remove('dragging');
+                    this.handleFiles(e.dataTransfer.files);
+                });
+
+                this.dropZone.addEventListener('click', () => {
+                    this.fileInput.click();
+                });
+
+                this.fileInput.addEventListener('change', () => {
+                    this.handleFiles(this.fileInput.files);
+                });
+            }
+
+            handleFiles(fileList) {
+                const files = Array.from(fileList).filter(file =>
+                    file.type.startsWith('image/') || file.type.startsWith('video/')
+                );
+
+                this.store.media = [...this.store.media, ...files];
+                this.updatePreview();
+            }
+
+            updatePreview() {
+                this.previewGrid.innerHTML = this.store.media.map((file, i) => `
+            <div class="preview-item">
+                ${file.type.startsWith('video/')
+                        ? `<video src="${URL.createObjectURL(file)}" controls></video>`
+                        : `<img src="${URL.createObjectURL(file)}" alt="">`
+                    }
+                <button class="remove" onclick="app.media.removeFile(${i})">×</button>
+            </div>
+        `).join('');
+            }
+
+            removeFile(index) {
+                this.store.media.splice(index, 1);
+                this.updatePreview();
+            }
+
+            clear() {
+                this.store.media = [];
+                this.updatePreview();
+            }
+        }
+
+        class PostManager {
+            constructor(store) {
+                this.store = store;
+                this.container = document.getElementById('posts');
+                store.subscribe(() => this.render());
+
+                document.addEventListener('keydown', e => {
+                    if (e.ctrlKey && e.key === 'Enter') {
+                        this.createPost();
+                    }
+                });
+            }
+
+            createPost() {
+                const input = document.getElementById('post-input');
+                const content = input.value.trim();
+
+                if (!content && !this.store.media.length) return;
+
+                const post = {
+                    id: Date.now(),
+                    author: this.store.user,
+                    content,
+                    media: this.store.media.map(file => ({
+                        url: URL.createObjectURL(file),
+                        type: file.type.startsWith('video/') ? 'video' : 'image'
+                    })),
+                    likes: 0,
+                    isLiked: false,
+                    showComments: false,
+                    comments: [],
+                    timestamp: new Date().toISOString()
+                };
+
+                this.store.posts.unshift(post);
+                this.store.savePosts();
+
+                input.value = '';
+                app.media.clear();
+
+                this.render();
+            }
+
+            toggleLike(postId) {
+                const post = this.store.posts.find(p => p.id === postId);
+                if (!post) return;
+
+                post.isLiked = !post.isLiked;
+                post.likes += post.isLiked ? 1 : -1;
+
+                this.store.savePosts();
+                this.render();
+            }
+
+            toggleComments(postId) {
+                const post = this.store.posts.find(p => p.id === postId);
+                if (!post) return;
+
+                post.showComments = !post.showComments;
+                this.store.savePosts();
+                this.render();
+            }
+
+            addComment(postId, input) {
+                const content = input.value.trim();
+                if (!content) return;
+
+                const post = this.store.posts.find(p => p.id === postId);
+                if (!post) return;
+
+                post.comments.push({
+                    id: Date.now(),
+                    author: this.store.user,
+                    content,
+                    timestamp: new Date().toISOString()
+                });
+
+                input.value = '';
+
+                this.store.savePosts();
+                this.render();
+            }
+
+            async sharePost(postId) {
+                const post = this.store.posts.find(p => p.id === postId);
+                if (!post) return;
+
+                const shareData = {
+                    title: `Post by ${post.author.name}`,
+                    text: post.content,
+                    url: window.location.href
+                };
+
+                try {
+                    if (navigator.share) {
+                        await navigator.share(shareData);
+                    } else {
+                        await navigator.clipboard.writeText(
+                            `${shareData.title}\n\n${shareData.text}\n\n${shareData.url}`
+                        );
+                        alert('Post link copied to clipboard!');
+                    }
+                } catch (err) {
+                    console.warn('Share failed:', err);
+                }
+            }
+
+            formatTime(isoString) {
+                const date = new Date(isoString);
+                const now = new Date();
+                const diff = (now - date) / 1000;
+
+                if (diff < 60) return 'Just now';
+                if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+                if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+                if (diff < 604800) return `${Math.floor(diff / 86400)}d ago`;
+
+                return date.toLocaleDateString();
+            }
+
+            render() {
+                this.container.innerHTML = this.store.posts.map((post, index) => `
+            <div class="card post" style="animation-delay: ${index * 100}ms">
+                <header>
+                    <img class="user-pic" src="${post.author.pic}" alt="">
+                    <div>
+                        <div class="user-name">${post.author.name}</div>
+                        <small>${this.formatTime(post.timestamp)}</small>
+                    </div>
+                </header>
+
+                ${post.content ? `<p>${post.content}</p>` : ''}
+
+                ${post.media.length ? `
+                    <div class="media-grid" style="grid-template-columns: repeat(${Math.min(post.media.length, 3)}, 1fr)">
+                        ${post.media.map(media =>
+                    media.type === 'video'
+                        ? `<video src="${media.url}" controls></video>`
+                        : `<img src="${media.url}" alt="">`
+                ).join('')}
+                    </div>
+                ` : ''}
+
+              <div class="actions">
+    <!-- Like Button -->
+    <button onclick="app.posts.toggleLike(${post.id})" class="${post.isLiked ? 'liked' : ''}">
+        <i class="${post.isLiked ? 'fas fa-heart liked' : 'far fa-heart'}"></i>
+        ${post.likes}
+    </button>
+
+    <!-- Comment Button -->
+    <button onclick="app.posts.toggleComments(${post.id})" class="${post.showComments ? 'active' : ''}">
+        <i class="far fa-comment"></i>
+        ${post.comments.length}
+    </button>
+
+    <!-- Share Button -->
+    <button onclick="app.posts.sharePost(${post.id})">
+        <i class="fas fa-share"></i>
+        Share
+    </button>
+</div>
+
+
+
+
+                ${post.showComments ? `
+                    <div class="comments">
+                        ${post.comments.map(comment => `
+                            <div class="comment">
+                                <img src="${comment.author.pic}" alt="">
+                                <div>
+                                    <h4>${comment.author.name}</h4>
+                                    <p>${comment.content}</p>
+                                    <time>${this.formatTime(comment.timestamp)}</time>
+                                </div>
+                            </div>
+                        `).join('')}
+                        
+                        <input 
+                            type="text" 
+                            placeholder="Write a comment..." 
+                            onkeydown="if(event.key === 'Enter') app.posts.addComment(${post.id}, this)"
+                        >
+                    </div>
+                ` : ''}
+            </div>
+        `).join('');
+
+                requestAnimationFrame(() => {
+                    this.container.querySelectorAll('.post').forEach(post => {
+                        post.classList.add('show');
+                    });
+                });
+            }
+        }
+
+        // App initialization
+        class App {
+            constructor() {
+                this.store = new Store();
+                this.media = new MediaHandler(this.store);
+                this.posts = new PostManager(this.store);
+            }
+
+            async init() {
+                await this.store.init();
+            }
+        }
+
+        // Global app instance
+        const app = new App();
+
+        // Start the app when DOM is ready
+        document.addEventListener('DOMContentLoaded', () => {
+            app.init().catch(err => {
+                console.error('Failed to initialize app:', err);
+            });
+        });
+
+        // Helper function to handle errors gracefully
+        function handleError(err) {
+            console.error('Error:', err);
+            alert('Something went wrong. Please try again.');
+        }
+
+        // Add keyboard shortcuts
+        document.addEventListener('keydown', e => {
+            // Ctrl+P to focus post input
+            if (e.ctrlKey && e.key === 'p') {
+                e.preventDefault();
+                document.getElementById('post-input').focus();
+            }
+
+            // Esc to clear post input
+            if (e.key === 'Escape') {
+                const input = document.getElementById('post-input');
+                if (input === document.activeElement) {
+                    input.value = '';
+                    input.blur();
+                }
+            }
+        });
+    </script>
+</body>
+
+</html>

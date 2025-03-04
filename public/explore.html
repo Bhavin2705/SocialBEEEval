@@ -1,0 +1,373 @@
+    <!DOCTYPE html>
+    <html lang="en">
+
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Social Feed</title>
+        <script src="https://cdn.tailwindcss.com"></script>
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+        <link rel="stylesheet" href="./components/css/explore.css">
+    </head>
+
+    <body class="bg-gray-50 min-h-screen">
+        
+        <nav class="fixed top-0 w-full bg-white/80 backdrop-blur-md border-b border-gray-100 z-50">
+            <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex justify-between items-center h-16">
+                    <div class="text-xl font-semibold text-gray-800">Recommended for you</div>
+                    <button id="toggle-search" class="p-2 rounded-full text-gray-600 hover:text-gray-800">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
+                            stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </nav>
+
+        <section class="gradient-bg pt-20 pb-6">
+            <div id="search-bar-container"
+                class="hidden-search search-bar max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 text-white">
+                <h2 class="text-3xl font-bold mb-4">Discover Content</h2>
+                <div class="flex items-center space-x-3 mb-6">
+                    <input type="text" id="search-input" placeholder="Search posts..."
+                        class="w-full px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-white text-gray-900">
+                </div>
+                <div class="flex flex-wrap gap-2" id="category-tags"></div>
+            </div>
+        </section>
+
+        <main class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-12">
+            <div id="post-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+            <div id="infinite-scroll-trigger" class="h-20"></div>
+        </main>
+
+
+        <script>
+            const categoryContent = {
+                trending: {
+                    images: [
+                        "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800",
+                        "https://images.unsplash.com/photo-1432888622747-4eb9a8efeb07?w=800",
+                        "https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?w=800",
+                        "https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=800",
+                        "https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=800"
+                    ],
+                    posts: [
+                        { title: "Future of AI", description: "Latest developments in artificial intelligence", username: "ai_expert" },
+                        { title: "Crypto Trends", description: "Analyzing cryptocurrency market trends", username: "crypto_analyst" },
+                        { title: "Green Energy Revolution", description: "Sustainable solutions changing the world", username: "eco_innovator" },
+                        { title: "Space Exploration", description: "Latest discoveries in space science", username: "space_explorer" },
+                        { title: "Health Tech", description: "Innovations in medical technology", username: "health_tech" }
+                    ]
+                },
+                tech: {
+                    images: [
+                        "https://images.unsplash.com/photo-1518770660439-4636190af475?w=800",
+                        "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=800",
+                        "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=800",
+                        "https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=800",
+                        "https://images.unsplash.com/photo-1531297484001-80022131f5a1?w=800",
+                        "https://images.unsplash.com/photo-1488590528505-98d2b5aba04b?w=800"
+                    ],
+                    posts: [
+                        { title: "Cloud Computing", description: "Modern infrastructure solutions", username: "tech_guru" },
+                        { title: "Cybersecurity", description: "Latest security protocols and practices", username: "security_pro" },
+                        { title: "Machine Learning", description: "Practical applications of ML in business", username: "ml_expert" },
+                        { title: "5G Networks", description: "The future of connectivity", username: "network_specialist" },
+                        { title: "IoT Innovations", description: "Smart devices changing our homes", username: "iot_developer" },
+                        { title: "Quantum Computing", description: "Breaking down quantum supremacy", username: "quantum_researcher" }
+                    ]
+                },
+                lifestyle: {
+                    images: [
+                        "https://images.unsplash.com/photo-1545205597-3d9d02c29597?w=800",
+                        "https://images.unsplash.com/photo-1529333166437-7750a6dd5a70?w=800",
+                        "https://images.unsplash.com/photo-1511795409834-ef04bbd61622?w=800",
+                        "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=800",
+                        "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=800",
+                        "https://images.unsplash.com/photo-1506126613408-eca07ce68773?w=800"
+                    ],
+                    posts: [
+                        { title: "Mindful Living", description: "Balance in modern life", username: "mindfulness_coach" },
+                        { title: "Home Design", description: "Interior design trends", username: "design_expert" },
+                        { title: "Sustainable Fashion", description: "Eco-friendly style guides", username: "eco_fashionista" },
+                        { title: "Plant-Based Cooking", description: "Delicious vegetarian recipes", username: "vegan_chef" },
+                        { title: "Digital Wellness", description: "Managing screen time effectively", username: "wellness_guide" },
+                        { title: "Urban Gardening", description: "Growing food in small spaces", username: "urban_farmer" }
+                    ]
+                },
+                gaming: {
+                    images: [
+                        "https://images.unsplash.com/photo-1538481199705-c710c4e965fc?w=800",
+                        "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=800",
+                        "https://images.unsplash.com/photo-1493711662062-fa541adb3fc8?w=800",
+                        "https://images.unsplash.com/photo-1534488972407-5a4aa1e47d83?w=800",
+                        "https://images.unsplash.com/photo-1509198397868-475647b2a1e5?w=800",
+                        "https://images.unsplash.com/photo-1526374870839-e155464bb9b2?w=800"
+                    ],
+                    posts: [
+                        { title: "Esports Trends", description: "Professional gaming scene updates", username: "pro_gamer" },
+                        { title: "Game Development", description: "Behind the scenes of game creation", username: "game_dev" },
+                        { title: "Gaming Setup", description: "Ultimate gaming station guide", username: "tech_gaming" },
+                        { title: "Indie Games", description: "Hidden gems in independent gaming", username: "indie_curator" },
+                        { title: "VR Gaming", description: "Virtual reality gaming experiences", username: "vr_enthusiast" },
+                        { title: "Retro Gaming", description: "Celebrating classic video games", username: "retro_gamer" }
+                    ]
+                },
+                books: {
+                    images: [
+                        "https://images.unsplash.com/photo-1512820790803-83ca734da794?w=800",
+                        "https://images.unsplash.com/photo-1526243741027-444d633d7365?w=800",
+                        "https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=800",
+                        "https://images.unsplash.com/photo-1495446815901-a7297e633e8d?w=800",
+                        "https://images.unsplash.com/photo-1516979187457-637abb4f9353?w=800",
+                        "https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?w=800"
+                    ],
+                    posts: [
+                        { title: "Book Club Picks", description: "Monthly reading recommendations", username: "bookworm" },
+                        { title: "Author Spotlight", description: "Interviews with upcoming writers", username: "book_reviewer" },
+                        { title: "Reading Corner", description: "Cozy reading nook ideas", username: "book_aesthetics" },
+                        { title: "Literary Analysis", description: "Deep dives into classic literature", username: "literature_prof" },
+                        { title: "Self-Published Gems", description: "Discovering independent authors", username: "indie_publisher" },
+                        { title: "Genre Focus", description: "Exploring different literary genres", username: "genre_expert" }
+                    ]
+                },
+                music: {
+                    images: [
+                        "https://images.unsplash.com/photo-1511379938547-c1f69419868d?w=800",
+                        "https://images.unsplash.com/photo-1520523839897-bd0b52f945a0?w=800",
+                        "https://images.unsplash.com/photo-1514320291840-2e0a9bf2a9ae?w=800",
+                        "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=800",
+                        "https://images.unsplash.com/photo-1510915361894-db8b60106cb1?w=800",
+                        "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=800"
+                    ],
+                    posts: [
+                        { title: "Music Production", description: "Home studio essentials", username: "producer" },
+                        { title: "Concert Reviews", description: "Live music experiences", username: "music_critic" },
+                        { title: "Playlist Curator", description: "Genre-blending music collections", username: "playlist_master" },
+                        { title: "Instrument Guides", description: "Learning musical instruments", username: "music_teacher" },
+                        { title: "Industry Insights", description: "Behind the music business", username: "industry_insider" },
+                        { title: "World Music", description: "Traditional sounds worldwide", username: "global_musician" }
+                    ]
+                },
+                art: {
+                    images: [
+                        "https://images.unsplash.com/photo-1513364776144-60967b0f800f?w=800",
+                        "https://images.unsplash.com/photo-1513364776144-60967b0f800f?w=800",
+                        "https://images.unsplash.com/photo-1547826039-bfc35e0f1ea8?w=800",
+                        "https://images.unsplash.com/photo-1536924940846-227afb31e2a5?w=800",
+                        "https://images.unsplash.com/photo-1499781350541-7783f6c6a0c8?w=800",
+                        "https://images.unsplash.com/photo-1519682337058-a94d519337bc?w=800"
+                    ],
+                    posts: [
+                        { title: "Digital Art", description: "Creating art with technology", username: "digital_artist" },
+                        { title: "Traditional Art", description: "Classic techniques explored", username: "art_master" },
+                        { title: "Art Markets", description: "Emerging art scene trends", username: "art_curator" },
+                        { title: "Street Art", description: "Urban art movements", username: "street_artist" },
+                        { title: "Art History", description: "Understanding artistic periods", username: "art_historian" },
+                        { title: "Mixed Media", description: "Combining artistic techniques", username: "mixed_media_artist" }
+                    ]
+                }
+            };
+            const postGrid = document.getElementById('post-grid');
+            const toggleSearchButton = document.getElementById('toggle-search');
+            const searchBarContainer = document.getElementById('search-bar-container');
+            const searchSection = document.getElementById('search-section');
+
+            toggleSearchButton.addEventListener('click', () => {
+                searchBarContainer.classList.toggle('visible');
+                searchSection.classList.toggle('visible');
+            });
+
+            let currentPage = 0;
+            const postsPerPage = 6;
+            let addedPosts = new Set();
+            let selectedCategory = null;
+            let searchQuery = '';
+
+            // Initialize category tags
+            const categoryTagsContainer = document.getElementById('category-tags');
+            Object.keys(categoryContent).forEach(category => {
+                const tag = document.createElement('span');
+                tag.classList.add('category-tag', 'px-4', 'py-2', 'bg-indigo-700', 'hover:bg-indigo-600', 'rounded-full', 'text-sm', 'font-medium');
+                tag.textContent = `#${category}`;
+                tag.addEventListener('click', () => selectCategory(category));
+                categoryTagsContainer.appendChild(tag);
+            });
+
+            function selectCategory(category) {
+                selectedCategory = selectedCategory === category ? null : category;
+                document.querySelectorAll('.category-tag').forEach(tag => {
+                    if (tag.textContent === `#${category}`) {
+                        tag.classList.toggle('active');
+                    } else {
+                        tag.classList.remove('active');
+                    }
+                });
+                resetFeed();
+            }
+
+            function resetFeed() {
+                postGrid.innerHTML = '';
+                addedPosts.clear();
+                currentPage = 0;
+                loadPosts();
+            }
+
+            function filterPosts(query) {
+                searchQuery = query.toLowerCase();
+                resetFeed();
+            }
+
+            function matchesSearch(post, category) {
+                if (!searchQuery) return true;
+                return post.title.toLowerCase().includes(searchQuery) ||
+                    post.description.toLowerCase().includes(searchQuery) ||
+                    post.username.toLowerCase().includes(searchQuery) ||
+                    category.toLowerCase().includes(searchQuery);
+            }
+
+            function getNextPost(category) {
+                const categoryData = categoryContent[category];
+                const availablePosts = categoryData.posts.filter(post =>
+                    !addedPosts.has(`${category}-${post.title}`) && matchesSearch(post, category)
+                );
+
+                if (availablePosts.length === 0) return null;
+
+                const postIndex = Math.floor(Math.random() * availablePosts.length);
+                const post = availablePosts[postIndex];
+                // Match post index to image index directly
+                const image = categoryData.images[categoryData.posts.indexOf(post)];
+                addedPosts.add(`${category}-${post.title}`);
+
+                return { ...post, image, category };
+            }
+
+            function createPostCard(postData) {
+                const card = document.createElement('div');
+                card.classList.add('post-card', 'bg-white', 'rounded-lg', 'shadow', 'p-4', 'opacity-0', 'transform', 'translate-y-4');
+
+                card.innerHTML = `
+            <img src="${postData.image}" alt="${postData.title}" 
+                class="w-full h-48 object-cover rounded-md mb-4">
+            <div class="flex items-center mb-3">
+                <span class="px-3 py-1 bg-indigo-100 text-indigo-800 rounded-full text-sm font-medium">
+                    #${postData.category}
+                </span>
+            </div>
+            <h3 class="text-lg font-semibold text-gray-800">${postData.title}</h3>
+            <p class="text-gray-600 mt-2">${postData.description}</p>
+            <div class="flex items-center justify-between mt-4">
+                <p class="text-gray-500 text-sm">@${postData.username}</p>
+                <button class="follow-btn px-4 py-2 rounded-lg font-medium bg-indigo-600 text-white 
+                            hover:bg-indigo-700 transition-colors">Follow</button>
+            </div>
+        `;
+
+                // Add functionality to the follow button
+                const followButton = card.querySelector('.follow-btn');
+                followButton.addEventListener('click', () => {
+                    if (followButton.textContent.trim() === 'Follow') {
+                        followButton.textContent = 'Unfollow';
+                        followButton.classList.remove('bg-indigo-600', 'hover:bg-indigo-700');
+                        followButton.classList.add('bg-gray-600', 'hover:bg-gray-700');
+                    } else {
+                        followButton.textContent = 'Follow';
+                        followButton.classList.remove('bg-gray-600', 'hover:bg-gray-700');
+                        followButton.classList.add('bg-indigo-600', 'hover:bg-indigo-700');
+                    }
+                });
+
+                requestAnimationFrame(() => {
+                    card.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+                    card.style.opacity = '1';
+                    card.style.transform = 'translateY(0)';
+                });
+
+                return card;
+            }
+
+            // Add after createPostCard function
+            function createShowMoreButton(category) {
+                const button = document.createElement('div');
+                button.classList.add('col-span-full', 'flex', 'justify-center', 'my-4');
+                button.innerHTML = `
+            <button class="show-more-btn flex items-center space-x-2 px-6 py-3 bg-white hover:bg-gray-50 rounded-full shadow transition-colors">
+                <span class="text-gray-700">Show More ${category}</span>
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-600" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                </svg>
+            </button>
+        `;
+
+                button.querySelector('.show-more-btn').addEventListener('click', () => {
+                    const additionalPosts = Math.floor(Math.random() * 3) + 4; // 4-6 posts
+                    const fragment = document.createDocumentFragment();
+
+                    for (let i = 0; i < additionalPosts; i++) {
+                        const postData = getNextPost(category);
+                        if (postData) {
+                            fragment.appendChild(createPostCard(postData));
+                        }
+                    }
+
+                    button.remove();
+                    postGrid.appendChild(fragment);
+                });
+
+                return button;
+            }
+
+            function loadPosts() {
+                const categories = selectedCategory ? [selectedCategory] : Object.keys(categoryContent);
+                const fragment = document.createDocumentFragment();
+                let loadedPosts = 0;
+
+                for (let i = 0; i < postsPerPage; i++) {
+                    const categoryIndex = (currentPage + i) % categories.length;
+                    const category = categories[categoryIndex];
+                    const postData = getNextPost(category);
+
+                    if (postData) {
+                        fragment.appendChild(createPostCard(postData));
+                        loadedPosts++;
+                    }
+                }
+
+                if (loadedPosts > 0) {
+                    postGrid.appendChild(fragment);
+                    if (selectedCategory) {
+                        postGrid.appendChild(createShowMoreButton(selectedCategory));
+                    }
+                    currentPage += postsPerPage;
+                }
+            }
+
+
+            // Event Listeners
+            document.getElementById('search-input').addEventListener('input', (e) => filterPosts(e.target.value));
+
+            document.getElementById('toggle-search').addEventListener('click', () => {
+                const searchBar = document.getElementById('search-bar-container');
+                searchBar.classList.toggle('hidden-search');
+                searchBar.classList.toggle('visible-search');
+            });
+
+            // Infinite Scroll Observer
+            const observer = new IntersectionObserver(
+                (entries) => entries.forEach(entry => entry.isIntersecting && loadPosts()),
+                { rootMargin: '100px' }
+            );
+
+            observer.observe(document.getElementById('infinite-scroll-trigger'));
+
+            // Initial load
+            loadPosts();
+        </script>
+    </body>
+
+    </html>

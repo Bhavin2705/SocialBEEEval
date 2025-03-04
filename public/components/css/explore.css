@@ -1,0 +1,49 @@
+body {
+    font-family: 'Inter', sans-serif;
+}
+
+.post-card {
+    transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+}
+
+.post-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+}
+
+.gradient-bg {
+    background: linear-gradient(135deg, #4f46e5, #3b82f6);
+}
+
+.search-bar {
+    transition: transform 0.5s ease-in-out,
+        opacity 0.5s ease-in-out,
+        max-height 0.7s ease-in-out;
+    overflow: hidden;
+    max-height: 0;
+    /* Start with 0 height when collapsed */
+}
+
+.hidden-search {
+    transform: translateY(-30px);
+    opacity: 0;
+    max-height: 0;
+    /* Collapsed state */
+}
+
+.visible-search {
+    transform: translateY(0);
+    opacity: 1;
+    max-height: 300px;
+    /* Expandable value, adjust based on your content height */
+}
+
+.category-tag {
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.category-tag.active {
+    background-color: #ffffff;
+    color: #4f46e5;
+}
